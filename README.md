@@ -18,3 +18,18 @@ npx http-server
 
 Then navigate to the displayed local address, typically `http://localhost:8000`.
 
+
+## Development
+
+Install dependencies with:
+
+```bash
+npm install
+```
+
+Run linters with:
+
+```bash
+npm run lint
+```
+
