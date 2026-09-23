@@ -56,6 +56,30 @@ var SIM = SIM || {};
     }
   };
 
+  // Llama a un enganche de todos los módulos sin que un módulo roto corte el juego (DISENO.md §6.4)
+  var erroresModulo = {};
+  SIM.llamarModulos = function (enganche, a, b, c) {
+    for (var i = 0; i < SIM.modulos.length; i++) {
+      var mod = SIM.modulos[i];
+      if (!mod[enganche]) continue;
+      try { mod[enganche](a, b, c); } catch (e) {
+        var k = (mod.nombre || i) + '.' + enganche;
+        if (!erroresModulo[k] && typeof console !== 'undefined') { erroresModulo[k] = true; console.error('Módulo ' + k + ':', e); }
+      }
+    }
+  };
+
+  // Azar propio de cada módulo: así un módulo nuevo no cambia las partidas de los demás (misma semilla = misma historia)
+  SIM.rngPara = function (m, nombre) {
+    m.rngs = m.rngs || {};
+    if (!m.rngs[nombre]) {
+      var h = 0;
+      for (var i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) | 0;
+      m.rngs[nombre] = SIM.crearRNG((m.mapa.semilla + Math.abs(h)) % 2147483647 || 1);
+    }
+    return m.rngs[nombre];
+  };
+
   // ---------- Fe (recurso de cada dios, ver DISENO.md §3.1) ----------
   SIM.darFe = function (m, idx, cantidad, motivo, x, y) {
     var civ = m.civs[idx];
@@ -153,7 +177,7 @@ var SIM = SIM || {};
       crearUnidad(m, c, 'colono', p[0], p[1]);
     });
     recalcularTerritorio(m);
-    SIM.modulos.forEach(function (mod) { if (mod.iniciar) mod.iniciar(m); });
+    SIM.llamarModulos('iniciar', m);
     return m;
   };
 
@@ -1436,7 +1460,7 @@ var SIM = SIM || {};
     });
     if (m.turno % 5 === 0) detectarContactos(m);
     revisarIntrigas(m);
-    SIM.modulos.forEach(function (mod) { if (mod.turno) mod.turno(m); });
+    SIM.llamarModulos('turno', m);
     if (SIM.Consejo) SIM.Consejo.revisar(m);
     comprobarVictoria(m);
   }
@@ -1459,7 +1483,7 @@ var SIM = SIM || {};
       for (var k = 0; k < m.efectos.length; k++) m.efectos[k].t--;
       m.efectos = m.efectos.filter(function (e) { return e.t > 0; });
     }
-    for (var mo = 0; mo < SIM.modulos.length; mo++) if (SIM.modulos[mo].tick) SIM.modulos[mo].tick(m);
+    SIM.llamarModulos('tick', m);
     if (m.tick % SIM.TICKS_POR_TURNO === 0) turnoEconomico(m);
   };
 

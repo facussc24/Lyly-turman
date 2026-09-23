@@ -194,6 +194,13 @@ Módulos: `plegaria_nueva`, `plegaria_cumplida`, `plegaria_fallida` {civ, ciudad
 Cada módulo: `SIM.modulos.push({ iniciar(m), turno(m), tick(m), dibujar(g, render, ahora), panel(m, humano) })`.
 `dibujar` recibe el contexto 2D del overlay y el render (usar `render.aPantalla(x, y)`, `render.escala`,
 `render.ancho/alto`); lo llaman **las dos vistas**. `panel` lo llama main.js cada ~250 ms.
+- Cada módulo declara `nombre` (p. ej. `'plegarias'`) y guarda su estado en `m[nombre]` como datos planos (JSON: nada de
+  funciones ni referencias circulares a ciudades/unidades; guardá **ids**), para que después se pueda guardar la partida.
+- Despacho seguro: `SIM.llamarModulos(enganche, a, b, c)` (en sim.js) llama al enganche de todos los módulos con
+  `try/catch`. sim.js ya lo usa para `iniciar/turno/tick`; **los renders y main.js tienen que usarlo** para `dibujar`/`panel`.
+- Azar: los módulos usan `var rng = SIM.rngPara(m, 'plegarias')` en vez de `m.rng()`, así no cambian las partidas de los demás.
+- `civ.eventos` ya existe (cola de avisos del Consejo), `civ.mision` y `civ.plan.objetivo` también (misión militar):
+  no reutilizar esos nombres.
 - `SIM.Plegarias` (plegarias.js): `activas(m, idx)` → lista `{id, ciudad, tipo, icono, titulo, texto, hasta, recompensa, accion}`;
   `pagar(m, id)` para las que se resuelven con oro. Dibuja globos sobre las ciudades. Llena `#hud-plegarias`.
 - `SIM.Objetivos` (objetivos.js): `activos(m, idx)` → `{id, titulo, texto, progreso, meta, recompensa}`. Llena `#hud-objetivos`.
