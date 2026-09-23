@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Civilizaciones</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="estilos-religion.css">
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+</head>
+<body>
+  <header id="barra">
+    <div class="titulo">⚜ Simulador de Civilizaciones</div>
+    <div id="anio" class="anio">3000 a.C.</div>
+    <div id="velocidades" class="velocidades">
+      <button data-vel="0" title="Pausa (espacio)">⏸</button>
+      <button data-vel="1" title="Velocidad 1x (tecla 1)">1x</button>
+      <button data-vel="2" title="Velocidad 2x (tecla 2)">2x</button>
+      <button data-vel="4" title="Velocidad 4x (tecla 3)">4x</button>
+      <button data-vel="8" title="Velocidad 8x (tecla 4)">8x</button>
+    </div>
+    <div id="estado-claude" class="estado-claude">🤖 Claude: …</div>
+    <button id="btn-ayuda" class="btn-sec" title="Cómo se juega">❔</button>
+    <button id="btn-sonido" class="btn-sec" title="Activar o silenciar el sonido">🔊</button>
+    <button id="btn-vista" class="btn-sec" title="Cambiar entre la vista 2.5D (con relieve) y la vista 2D plana">🗺 Vista 2D</button>
+    <button id="btn-nueva" class="btn-sec">Nueva partida</button>
+  </header>
+
+  <main>
+    <div id="mapa-wrap">
+      <canvas id="mapa3d" class="oculto"></canvas>
+      <canvas id="mapa"></canvas>
+      <div id="tooltip" class="tooltip oculto"></div>
+      <div id="banner-claude" class="banner oculto"></div>
+      <div id="avisos" class="avisos"></div>
+      <div id="panel-sel" class="panel-sel oculto"></div>
+      <div id="barra-poderes" class="barra-poderes"></div>
+      <div id="toast" class="toast oculto"></div>
+      <div id="ayuda-mapa" class="ayuda-mapa">Clic: elegir · Arrastrar: seleccionar tropas · Clic derecho: mover / atacar · Clic derecho arrastrando o WASD: mover el mapa · Rueda: zoom · Espacio: pausa</div>
+    </div>
+
+    <aside id="panel">
+      <section>
+        <h3>Civilizaciones</h3>
+        <div id="lista-civs"></div>
+      </section>
+      <section id="sec-plan">
+        <h3>Tu plan <span class="sub">(lo que hace tu gente cuando no le das órdenes)</span></h3>
+        <div id="plan"></div>
+        <label class="piloto"><input type="checkbox" id="chk-piloto"> Piloto automático: que la IA responda los avisos por mí</label>
+      </section>
+      <section id="sec-religion" class="oculto"></section>
+      <section id="sec-claude">
+        <h3>🤖 Diario de Claude</h3>
+        <div id="diario-claude" class="diario"><p class="vacio">Todavía no tomó ninguna decisión.</p></div>
+      </section>
+      <section class="crece">
+        <h3>Crónica</h3>
+        <div id="cronica" class="cronica"></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="inicio" class="modal">
+    <div class="tarjeta inicio">
+      <h1>⚜ Simulador de Civilizaciones</h1>
+      <p class="bajada">Las civilizaciones crecen solas desde el año 3000 a.C. Vos aconsejás a la tuya, Claude a la suya y las IAs del juego también compiten.</p>
+      <h4>Elegí tu civilización</h4>
+      <div id="elegir-civ" class="elegir-civ"></div>
+      <div class="fila-opciones">
+        <label>Claude juega con
+          <select id="sel-claude"></select>
+        </label>
+        <label>IAs del juego
+          <select id="sel-bots"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
+        </label>
+        <label>Mapa (semilla)
+          <span class="semilla"><input id="inp-semilla" type="number" min="1" max="999999"><button id="btn-dado" class="btn-sec" title="Otro mapa">🎲</button></span>
+        </label>
+      </div>
+      <div class="controles">
+        <div><b>🖱 Clic</b> en tus tropas o arrastrá un recuadro para seleccionarlas</div>
+        <div><b>🖱 Clic derecho</b> en el mapa para moverlas, o sobre un enemigo para atacarlo</div>
+        <div><b>🏰 Clic en tu ciudad</b> para elegir qué entrena o construye</div>
+        <div><b>⚡ Poderes de Dios</b> abajo del mapa: rayos, lluvia, bendición, terremoto y peste</div>
+        <div><b>📜 Avisos</b> arriba a la izquierda: guerra, paz y otras decisiones (el juego no se frena)</div>
+      </div>
+      <p id="inicio-claude" class="nota"></p>
+      <button id="btn-empezar" class="btn-principal">Empezar la historia</button>
+    </div>
+  </div>
+
+  <div id="ayuda" class="modal oculto">
+    <div class="tarjeta">
+      <h1>❔ Cómo se juega</h1>
+      <div class="controles">
+        <div><b>🖱 Clic</b> en una tropa o <b>arrastrar un recuadro</b>: seleccionar. <b>Doble clic</b>: todas las de ese tipo</div>
+        <div><b>🖱 Clic derecho</b>: mover, o atacar una ciudad o tropa enemiga. Con colonos: fundar una ciudad ahí</div>
+        <div><b>🖱 Clic derecho arrastrando</b> o <b>W A S D</b> / flechas: mover el mapa · <b>Rueda</b>: zoom</div>
+        <div><b>🏰 Clic en tu ciudad</b>: elegir qué entrena o construye, o comprarlo con oro</div>
+        <div><b>⚡ Poderes de Dios</b> (barra de abajo): clic en el poder y después en el mapa. Esc cancela</div>
+        <div><b>📜 Avisos</b> (arriba a la izquierda): guerra, paz, traiciones, religión, sectas… Si no respondés, decide tu consejero</div>
+        <div><b>⌨ Teclas</b>: Espacio pausa · 1 2 3 4 velocidad · E todo el ejército · C tu capital · 0 el mundo entero · Esc deseleccionar</div>
+        <div><b>🤝 Diplomacia</b>: botones ⚔ Guerra / 🕊 Paz en las tarjetas de cada civilización (panel derecho)</div>
+        <div><b>🧭 Tu plan</b>: lo que hace tu gente cuando no le das órdenes (foco, flota, murallas, atacar o defender)</div>
+        <div><b>🏆 Se gana</b> por conquista, con una Maravilla que aguante 250 turnos, o por puntaje en el año 2050</div>
+      </div>
+      <div class="botones" style="display:flex;justify-content:flex-end;margin-top:14px"><button id="btn-cerrar-ayuda" class="btn-principal">¡A jugar!</button></div>
+    </div>
+  </div>
+
+  <div id="final" class="modal oculto">
+    <div class="tarjeta final">
+      <h1 id="final-titulo"></h1>
+      <p id="final-texto"></p>
+      <table id="final-tabla"></table>
+      <div class="botones">
+        <button id="btn-seguir" class="btn-sec">Seguir mirando</button>
+        <button id="btn-otra" class="btn-principal">Nueva partida</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/datos.js"></script>
+  <script src="js/mapa.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/consejo.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/render3d.js"></script>
+  <script src="js/religion.js"></script>
+  <script src="js/comercio.js"></script>
+  <script src="js/burbujas.js"></script>
+  <script src="js/sonido.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

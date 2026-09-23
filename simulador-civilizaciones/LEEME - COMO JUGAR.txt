@@ -1,0 +1,53 @@
+SIMULADOR DE CIVILIZACIONES
+===========================
+
+CÓMO ABRIRLO
+------------
+1) Doble clic en "JUGAR (EJECUTABLE).bat".
+   Se abre una ventana negra (NO la cierres mientras jugás) y el juego en el navegador.
+   Si el navegador no se abre solo, entrá a:  http://localhost:8123
+
+   Necesita Node.js instalado. Si la ventana dice "Falta instalar Node.js":
+   bajalo de https://nodejs.org (botón LTS), instalalo y volvé a abrir el .bat.
+
+2) Si no tenés Node o algo falla: doble clic en
+   "JUGAR SIN CLAUDE (abrir si el otro falla).html".
+   El juego anda igual, pero la civilización de Claude la maneja la IA del juego.
+
+PARA QUE CLAUDE JUEGUE DE VERDAD
+--------------------------------
+El juego le pregunta a Claude Code instalado en tu PC (usa tu suscripción).
+Si arriba a la derecha dice "Claude: sin sesión":
+  - Abrí una terminal (PowerShell), escribí:  claude
+  - Adentro escribí:  /login   y seguí los pasos.
+  - Cerrá y volvé a abrir "JUGAR (EJECUTABLE).bat".
+Cuando anda, vas a ver en el panel "Diario de Claude" qué decidió y por qué,
+y sus mensajes (a veces te carga) en la crónica.
+
+CONTROLES
+---------
+- Clic en tus tropas / arrastrar un recuadro: seleccionar
+- Doble clic en una tropa: todas las de ese tipo que se ven
+- Clic derecho: mover / atacar una ciudad o tropa enemiga (con colonos: fundar ciudad)
+- Clic derecho arrastrando, o W A S D / flechas: mover el mapa
+- Rueda del mouse: zoom
+- Clic en tu ciudad: elegir qué entrena o construye, comprar con oro
+- Barra de abajo: poderes de Dios (Rayo, Lluvia, Bendición, Terremoto, Intriga, Peste)
+- Teclas: Espacio pausa · 1 2 3 4 velocidad · E todo el ejército · C tu capital · 0 ver todo el mundo
+- Botón de arriba "Vista 2D / Vista 2.5D": cambia entre mapa plano y mapa con relieve
+- Avisos arriba a la izquierda: guerras, paz, traiciones... (el juego no se frena;
+  si no respondés a tiempo, decide tu consejero)
+
+CÓMO SE GANA
+------------
+- Conquista: quedar como la única civilización
+- Maravilla: construirla (desde la Era Pólvora) y mantenerla 250 turnos
+- Puntaje: el que va mejor cuando se llega al año 2050
+
+QUÉ HAY EN EL MUNDO
+-------------------
+Eras de la Antigua a la Moderna (guerreros -> caballeros -> cañones -> tanques y aviones),
+barcos, comercio con caravanas (los enemigos las saquean), traiciones e intrigas,
+fuego amigo, religiones y sociedades secretas, héroes de las campañas del Conquerors
+(El Cid, Moctezuma, Pacal, Yi Sun-sin, Atila) y globos de diálogo con las cargadas
+de las IAs y los mensajes de Claude. Botón 🔊 arriba para el sonido.
