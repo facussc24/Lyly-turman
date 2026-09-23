@@ -44,6 +44,31 @@ var SIM = SIM || {};
   }
   SIM.encolarEvento = encolarEvento;
 
+  // ---------- bus de eventos (contrato del rediseño, ver DISENO.md §6.1) ----------
+  var oyentes = [];
+  SIM.escuchar = function (fn) {
+    oyentes.push(fn);
+    return function () { var i = oyentes.indexOf(fn); if (i >= 0) oyentes.splice(i, 1); };
+  };
+  SIM.emitir = function (m, tipo, datos) {
+    for (var i = 0; i < oyentes.length; i++) {
+      try { oyentes[i](m, tipo, datos || {}); } catch (e) { if (typeof console !== 'undefined') console.error('Oyente de "' + tipo + '":', e); }
+    }
+  };
+
+  // ---------- Fe (recurso de cada dios, ver DISENO.md §3.1) ----------
+  SIM.darFe = function (m, idx, cantidad, motivo, x, y) {
+    var civ = m.civs[idx];
+    if (!civ || !civ.viva || !cantidad) return 0;
+    var antes = civ.puntosFe;
+    civ.puntosFe = Math.max(0, civ.puntosFe + cantidad);
+    var real = civ.puntosFe - antes;
+    civ.puntosFeTurno += real;
+    if (real > 0) civ.puntosFeTotal += real;
+    SIM.emitir(m, 'fe', { civ: idx, cantidad: real, motivo: motivo || '', x: x, y: y });
+    return real;
+  };
+
   SIM.ciudadesDe = function (m, idx) { return m.ciudades.filter(function (c) { return c.civ === idx; }); };
   SIM.ciudadPorId = function (m, id) {
     for (var i = 0; i < m.ciudades.length; i++) if (m.ciudades[i].id === id) return m.ciudades[i];
@@ -110,6 +135,7 @@ var SIM = SIM || {};
         proximoRumbo: 45 + idx * 9, proximaOportunidad: 90 + idx * 11,
         maravillaDesde: null, diario: [], cache: null, popTotal: 0, bajas: 0, victorias: 0,
         recargas: { rayo: 30, lluvia: 20, bendicion: 40, terremoto: 150, peste: 200, intriga: 160 },
+        puntosFe: 40, puntosFeTurno: 0, puntosFeTotal: 0,
       });
     });
     calcularRegiones(m);
@@ -175,6 +201,7 @@ var SIM = SIM || {};
     registrar(m, civ.idx, 'ciudad', capital
       ? '👑 Los ' + civ.nombre + ' fundan su capital: ' + nombre
       : '🏕 Los ' + civ.nombre + ' fundaron ' + nombre);
+    SIM.emitir(m, 'ciudad_fundada', { civ: civ.idx, ciudad: c });
     return c;
   }
 
@@ -240,6 +267,7 @@ var SIM = SIM || {};
     if (SIM.cargada) { SIM.cargada(m, nuevo, 'conquista'); SIM.cargada(m, viejo, 'perdida'); }
     if (eraCapital) elegirCapital(m, civV);
     recalcularTerritorio(m);
+    SIM.emitir(m, 'ciudad_capturada', { civ: nuevo, ciudad: c, de: viejo, motivo: 'conquista' });
     if (!SIM.ciudadesDe(m, viejo).length) eliminarCiv(m, civV, civN);
     else encolarEvento(m, civV, { tipo: 'ciudad_perdida', otro: nuevo, ciudad: c.nombre }, 4);
   }
@@ -250,6 +278,7 @@ var SIM = SIM || {};
     m.consejos = m.consejos.filter(function (k) { return k.civ !== civ.idx; });
     m.civs.forEach(function (o) { o.rel[civ.idx] = 'paz'; civ.rel[o.idx] = 'paz'; });
     registrar(m, porQuien.idx, 'eliminada', '💀 ¡Los ' + civ.nombre + ' fueron eliminados por los ' + porQuien.nombre + '!');
+    SIM.emitir(m, 'civ_eliminada', { civ: civ.idx, por: porQuien.idx });
   }
 
   // ---------- unidades ----------
@@ -261,6 +290,7 @@ var SIM = SIM || {};
       esperaCamino: 0, enemigo: null, ultimoCombate: -99,
     };
     m.unidades.push(u);
+    SIM.emitir(m, 'unidad_creada', { civ: civ.idx, unidad: u });
     return u;
   }
 
@@ -509,7 +539,7 @@ var SIM = SIM || {};
     a.cd = SIM.TICKS_POR_TURNO; a.flash = 3; b.golpe = 3;
     a.ultimoCombate = b.ultimoCombate = m.turno;
     efecto(m, a, b.x, b.y, a.d.rango ? 'disparo' : 'golpe');
-    if (b.hp <= 0 && !b.muerta) { b.muerta = true; m.civs[b.civ].bajas++; }
+    if (b.hp <= 0 && !b.muerta) { b.muerta = true; m.civs[b.civ].bajas++; SIM.emitir(m, 'unidad_muerta', { civ: b.civ, unidad: b, por: a.civ }); }
   }
 
   function atacarCiudad(m, a, c) {
@@ -873,6 +903,7 @@ var SIM = SIM || {};
       return;
     }
     c.ed[cola.id] = 1;
+    SIM.emitir(m, 'edificio', { civ: civ.idx, ciudad: c, edificio: cola.id });
     if (cola.id === 'maravilla') {
       civ.maravillaDesde = m.turno;
       registrar(m, civ.idx, 'maravilla', '🏛 ¡Los ' + civ.nombre + ' terminaron una Maravilla en ' + c.nombre + '! Si la mantienen ' + SIM.TURNOS_MARAVILLA + ' turnos, ganan.');
@@ -1074,7 +1105,7 @@ var SIM = SIM || {};
       m.unidades.forEach(function (u) {
         if (u.muerta || u.civ === idx || dist(u.x, u.y, x, y) > radio) return;
         u.hp -= danio; u.golpe = 5; victimas[u.civ] = true;
-        if (u.hp <= 0) { u.muerta = true; m.civs[u.civ].bajas++; }
+        if (u.hp <= 0 && !u.muerta) { u.muerta = true; m.civs[u.civ].bajas++; SIM.emitir(m, 'unidad_muerta', { civ: u.civ, unidad: u, por: idx }); }
       });
     }
     function ciudadesEn(radio, propias) {
@@ -1120,6 +1151,7 @@ var SIM = SIM || {};
       var o = m.civs[+k];
       if (o.viva && o.rel[idx] !== 'guerra') encolarEvento(m, o, { tipo: 'oportunidad', otro: idx }, 4);
     });
+    SIM.emitir(m, 'poder', { civ: idx, tipo: tipo, x: x, y: y, ciudad: lugar && md < 2 ? lugar.id : null, victimas: Object.keys(victimas).map(Number) });
     return { ok: true };
   };
 
@@ -1217,6 +1249,7 @@ var SIM = SIM || {};
       if (c.ed.maravilla) { c.ed.maravilla = 0; viejo.maravillaDesde = null; }
       if (eraCap) { c.capital = false; elegirCapital(m, viejo); }
       recalcularTerritorio(m);
+      SIM.emitir(m, 'ciudad_capturada', { civ: it.por, ciudad: c, de: viejo.idx, motivo: 'traicion' });
       if (!SIM.ciudadesDe(m, viejo.idx).length) eliminarCiv(m, viejo, nuevo);
       else encolarEvento(m, viejo, { tipo: 'ciudad_perdida', otro: it.por, ciudad: c.nombre }, 4);
     });
@@ -1248,6 +1281,7 @@ var SIM = SIM || {};
     registrar(m, a, 'guerra', '⚔ ¡Los ' + A.nombre + ' le declararon la guerra a los ' + B.nombre + '!');
     if (SIM.cargada) SIM.cargada(m, a, 'guerra');
     encolarEvento(m, B, { tipo: 'guerra_recibida', otro: a }, 5);
+    SIM.emitir(m, 'guerra', { civ: a, otro: b });
     return true;
   };
 
@@ -1262,6 +1296,7 @@ var SIM = SIM || {};
     });
     registrar(m, a, 'paz', '🕊 Los ' + A.nombre + ' y los ' + B.nombre + ' firmaron la paz');
     if (SIM.cargada) SIM.cargada(m, m.rng() < 0.5 ? a : b, 'paz');
+    SIM.emitir(m, 'paz', { civ: a, otro: b });
     return true;
   };
 
@@ -1309,6 +1344,7 @@ var SIM = SIM || {};
       m.fin = { ganador: idx, motivo: motivo, turno: m.turno };
       var textos = { conquista: 'por conquista', maravilla: 'por su Maravilla', puntaje: 'por puntaje en el año 2050' };
       registrar(m, idx, 'fin', '🏆 ¡Ganaron los ' + m.civs[idx].nombre + ' ' + textos[motivo] + '!');
+      SIM.emitir(m, 'fin', { civ: idx, motivo: motivo });
     }
     if (vivas.length === 1) return terminar(vivas[0].idx, 'conquista');
     for (var i = 0; i < vivas.length; i++) {
@@ -1353,7 +1389,7 @@ var SIM = SIM || {};
   function turnoEconomico(m) {
     m.turno++;
     var cambio = false;
-    m.civs.forEach(function (c) { c.cienciaTurno = 0; c.oroTurno = 0; });
+    m.civs.forEach(function (c) { c.cienciaTurno = 0; c.oroTurno = 0; c.puntosFeTurno = 0; });
     m.civs.forEach(function (civ) { if (civ.viva) gobernar(m, civ); });
     m.ciudades.slice().forEach(function (c) {
       var civ = m.civs[c.civ], r = rendimientos(m, c);
@@ -1388,6 +1424,7 @@ var SIM = SIM || {};
         });
         registrar(m, civ.idx, 'era', '🎓 Los ' + civ.nombre + ' entran en la Era ' + SIM.ERAS[civ.era].nombre + (mejoradas ? ' y modernizan ' + mejoradas + ' unidades' : ''));
         encolarEvento(m, civ, { tipo: 'nueva_era', era: civ.era }, 2);
+        SIM.emitir(m, 'era', { civ: civ.idx, era: civ.era });
       }
     });
     revisarHeroes(m);

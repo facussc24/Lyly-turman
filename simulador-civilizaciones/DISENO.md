@@ -171,6 +171,8 @@ Eventos que emite el núcleo (`datos` siempre trae `civ` = índice de la civ pro
 - `civ_eliminada` {civ, por}
 - `fe` {civ, cantidad, motivo, x, y} (lo emite `SIM.darFe`)
 - `fin` {civ, motivo}
+Ojo: en `SIM.crearMundo` se emiten `ciudad_fundada`/`unidad_creada` **antes** de `iniciar(m)` de los módulos:
+los oyentes tienen que tolerar que su estado en `m` todavía no exista.
 Módulos: `plegaria_nueva`, `plegaria_cumplida`, `plegaria_fallida` {civ, ciudad, plegaria}; `objetivo_cumplido`
 {civ, objetivo}; `conversion` {civ, ciudad, de} (civ = nuevo dios mayoritario).
 
@@ -212,6 +214,11 @@ Interfaz común que usa main.js: `nuevoMundo(m)`, `redimensionar()`, `ajustar()`
 - `#hud-recursos` (barra superior, main.js), `#hud-objetivos` y `#hud-plegarias` (overlay izquierdo del mapa),
   `#minimapa` (canvas abajo a la derecha del mapa), `#panel-victoria` (dentro del panel derecho).
 - CSS por módulo: `estilos-objetivos.css`, `estilos-plegarias.css`, `estilos-minimapa.css`, `estilos-pantallas.css`.
+- **Posición** de los contenedores en pantalla (dónde va `#hud-izq`, `#minimapa`, `#avisos`, etc.): la decide E en `estilos.css`.
+  El **contenido** y su estilo interno: el dueño del módulo, en su propio CSS.
+- Los scripts nuevos ya están en `index.html` (plegarias, objetivos, efectos, minimapa, pantallas) con archivos vacíos.
+  `herramientas/probar.js --modulos` carga también `plegarias.js` y `objetivos.js`: esos dos **no pueden tocar el DOM**
+  fuera de `panel()`/`dibujar()` (en Node no hay `document`).
 
 ## 7. Dueños de archivo (ola 2)
 

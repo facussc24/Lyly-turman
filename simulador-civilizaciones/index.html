@@ -8,12 +8,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="estilos-religion.css">
+  <link rel="stylesheet" href="estilos-plegarias.css">
+  <link rel="stylesheet" href="estilos-objetivos.css">
+  <link rel="stylesheet" href="estilos-minimapa.css">
+  <link rel="stylesheet" href="estilos-pantallas.css">
   <script src="js/vendor/three.min.js"></script>
 </head>
 <body>
   <header id="barra">
     <div class="titulo">⚜ Simulador de Civilizaciones</div>
     <div id="anio" class="anio">3000 a.C.</div>
+    <div id="hud-recursos" class="hud-recursos"></div>
     <div id="velocidades" class="velocidades">
       <button data-vel="0" title="Pausa (espacio)">⏸</button>
       <button data-vel="1" title="Velocidad 1x (tecla 1)">1x</button>
@@ -34,7 +39,12 @@
       <canvas id="mapa"></canvas>
       <div id="tooltip" class="tooltip oculto"></div>
       <div id="banner-claude" class="banner oculto"></div>
+      <div id="hud-izq" class="hud-izq">
+        <div id="hud-objetivos"></div>
+        <div id="hud-plegarias"></div>
+      </div>
       <div id="avisos" class="avisos"></div>
+      <canvas id="minimapa" class="minimapa"></canvas>
       <div id="panel-sel" class="panel-sel oculto"></div>
       <div id="barra-poderes" class="barra-poderes"></div>
       <div id="toast" class="toast oculto"></div>
@@ -42,6 +52,10 @@
     </div>
 
     <aside id="panel">
+      <section id="sec-victoria">
+        <h3>Camino a la victoria</h3>
+        <div id="panel-victoria"></div>
+      </section>
       <section>
         <h3>Civilizaciones</h3>
         <div id="lista-civs"></div>
@@ -133,6 +147,11 @@
   <script src="js/religion.js"></script>
   <script src="js/comercio.js"></script>
   <script src="js/burbujas.js"></script>
+  <script src="js/plegarias.js"></script>
+  <script src="js/objetivos.js"></script>
+  <script src="js/efectos.js"></script>
+  <script src="js/minimapa.js"></script>
+  <script src="js/pantallas.js"></script>
   <script src="js/sonido.js"></script>
   <script src="js/main.js"></script>
 </body>

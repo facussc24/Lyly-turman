@@ -6,7 +6,8 @@ const vm = require('vm');
 
 const ctx = { console, Math, Date };
 vm.createContext(ctx);
-const extra = process.argv.includes('--modulos') ? ['comercio.js', 'religion.js'] : [];
+// --modulos suma los módulos que no tocan el DOM (tienen que andar en Node)
+const extra = process.argv.includes('--modulos') ? ['comercio.js', 'religion.js', 'plegarias.js', 'objetivos.js'].filter((f) => fs.existsSync(path.join(__dirname, '..', 'js', f))) : [];
 for (const f of ['datos.js', 'mapa.js', 'sim.js', 'consejo.js'].concat(extra)) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'), ctx, { filename: f });
 }
