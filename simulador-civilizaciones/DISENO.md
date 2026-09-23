@@ -220,6 +220,37 @@ Interfaz común que usa main.js: `nuevoMundo(m)`, `redimensionar()`, `ajustar()`
   `herramientas/probar.js --modulos` carga también `plegarias.js` y `objetivos.js`: esos dos **no pueden tocar el DOM**
   fuera de `panel()`/`dibujar()` (en Node no hay `document`).
 
+### 6.7 Contratos entre dueños (quién provee → quién usa). Usá siempre con chequeo de existencia.
+- **A → B, otros**: `SIM.cambiarDueno(m, c, nuevoIdx, motivo)` — pasa una ciudad a otro dueño sin combate (capital,
+  maravilla, territorio, eliminación de civ, evento `ciudad_capturada` con ese `motivo`). Lo usan la deserción por fe (B)
+  y la traición.
+- **A → K**: `civ.milagrosManuales` (bool). Si es `true`, la IA automática de milagros de A **no** lanza milagros por esa civ
+  (K lo pone en la civ de Claude mientras Claude esté activo y decida milagros por avisos). Humano: la IA automática
+  solo actúa con piloto automático.
+- **A → todos**: `SIM.estadisticas(m, idx)` suma `fe` (= `puntosFe` redondeado) y `feTurno`.
+- **B → A, E, L**: `SIM.Religion.profeta(m, idx, ciudad)` → `{ok, motivo}` (lo llama `usarPoder('profeta')`);
+  `SIM.Religion.mayoria(m)` → `{porCiv: [ciudades donde la religión de cada civ es mayoría], total}` (victoria por fe);
+  `SIM.Religion.religionDe(m, idx)` → `{nombre, icono, color, dios}` (el nombre del dios lo usan UI, burbujas y Claude).
+- **B**: el ingreso periódico de Fe se da con `SIM.darFe(m, idx, x, 'ingreso')`. **Motivo `'ingreso'` = silencioso**:
+  efectos y sonido lo ignoran (si no, habría un número flotando por civ por turno).
+- **C → B, E**: `c.devocion` lo inicializa y lo mueve C (0.2–1.5, por defecto 1). B y E solo lo leen
+  (`c.devocion === undefined ? 1 : c.devocion`).
+- **E → C, D, L**: `window.JUEGO.activarPoder(tipo)` (arma el milagro para apuntar con el mouse),
+  `window.JUEGO.centrar(x, y, escala?)` (mueve la cámara), `window.JUEGO.render`, `window.JUEGO.mundo()`, `window.JUEGO.humano`.
+- **F → H, L**: `SIM.Render.dibujarTerreno(m)` y `SIM.Render.pintarTerritorio(m, lienzo)` **mantienen firma y tamaño**
+  (H los usa como textura). Nuevo `SIM.Render.agruparUnidades(m, render, radioPx)` → `[{civ, x, y, unidades:[...], tipo}]`
+  para dibujar estandartes con número cuando se aleja la cámara (lo usan las dos vistas y el minimapa).
+- **I → F, H, L**: `SIM.Sprites.unidad(tipo, color, embarcado, cuadro?)` (cuadro de animación opcional, compatible con lo
+  actual), `SIM.Sprites.ciudad(c, civ)` (por cultura/tamaño/era), `SIM.Sprites.estandarte(civ, cantidad, tipo)`,
+  `SIM.Sprites.cultura(claveCiv)` → `'europea'|'mesoamericana'|'asiatica'|'estepa'`.
+- **J**: el sonido de los eventos del bus (`plegaria_*`, `objetivo_cumplido`, `era`, `fin`, `conversion`, `ciudad_capturada`
+  del humano) lo dispara J solo, escuchando con `SIM.escuchar`. Los demás módulos **no** llaman a `SIM.Sonido` por esos
+  eventos (evita sonidos dobles). main.js sigue sonando avisos y los efectos de `m.efectos`.
+- **L → E**: `SIM.Pantallas.mostrarInicio(opciones, alEmpezar)` con `opciones = {civs: SIM.CIVS, orden: SIM.ORDEN_CIVS,
+  claudeDisponible, semilla}` y `alEmpezar({civ, claude, bots, semilla})`; `SIM.Pantallas.mostrarFinal(m, humano,
+  {alSeguir, alOtra})`. L construye todo el contenido de `#inicio` y `#final` por JS; E los llama si existen (si no,
+  usa lo viejo) y no depende de elementos internos de esos modales.
+
 ## 7. Dueños de archivo (ola 2)
 
 | agente | archivos que puede editar | qué hace |
