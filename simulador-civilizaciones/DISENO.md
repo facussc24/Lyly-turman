@@ -108,19 +108,32 @@ se ve en el mapa y aparece un globo con el nombre de su dios.
   «Sobreviví a la invasión de los X», «Tené 8 ciudades», «Construí la Maravilla»…
 
 ### 3.6 Victoria (clara y a la vista)
-`SIM.progresoVictoria(m, idx)` devuelve el progreso 0..1 de cada camino; la UI muestra un panel con barras por dios.
-- ⚔ **Conquista**: controlar todas las capitales originales rivales (o ser el único vivo).
-- 🙏 **Fe**: tu religión es mayoritaria en el 60% de las ciudades del mundo durante 60 turnos seguidos.
-- 🏛 **Maravilla**: construirla (Era Pólvora) y mantenerla 150 turnos.
-- 🏆 **Puntaje**: el mejor al llegar al 2050 (turno 1200).
+Datos del diagnóstico (168 partidas): 88% terminaban por puntaje, 12,5% por Maravilla y **0% por conquista**; «Economía +
+Maravilla y esperar» ganaba 7 de 12; el líder del turno 900 ganaba el 84%. Nuevo esquema:
+`SIM.progresoVictoria(m, idx)` devuelve el progreso 0..1 de cada camino; la UI muestra un panel con barras por dios, siempre visible.
+- ⚔ **Dominación**: tu pueblo controla el **50% de las ciudades del mundo** (o sos el único vivo).
+- 🙏 **Fe**: tu religión es mayoritaria en el **60% de las ciudades del mundo** durante 60 turnos seguidos.
+- 🏛 **Maravilla**: más cara y por etapas visibles; hay que mantenerla **200 turnos** y los rivales reaccionan (avisos, alianzas en contra).
+- 🏆 **Puntaje**: el mejor al final (año 2050). El puntaje se ve siempre en la UI.
+Meta de balance: cada camino gana en una proporción razonable de partidas (ninguno > 50%) y ninguna jugada de un botón gana sola.
 
 ### 3.7 Ritmo y claridad
-- Menos unidades y más significativas: tope de ejército por civilización (≈ 4 + 2×ciudades), unidades algo más
-  fuertes. Lejos, las unidades cercanas del mismo bando se dibujan como **un estandarte con número**.
-- La crónica solo muestra lo importante para el jugador (sus ciudades, sus guerras, milagros, eras, victorias);
-  el resto queda filtrable.
-- Avisos (decisiones con opciones) más espaciados y siempre relevantes. Se puede pausar al llegar uno (opción).
+Datos: ~200 unidades en el mapa (picos de 451, 72 peleando a la vez); crónica de 844 líneas/partida con 85% ajeno al jugador;
+primer aviso para el jugador en el turno ~115; tramos de 263 turnos sin nada que lo involucre; guerra en el 85% de los turnos;
+calendario roto (pólvora en 628 d.C., tanques en 1790) y una Era Moderna de 372 turnos sin nada nuevo.
+- **Menos unidades y más significativas**: tope de ejército por civilización (≈ 4 + 2×ciudades). Lejos, las unidades cercanas del
+  mismo bando se dibujan como **un estandarte con número**.
+- **Algo para hacer en los primeros 30 segundos** (objetivos-tutorial + primera plegaria ~turno 25) y nunca más de ~60 turnos
+  sin algo que involucre al jugador.
+- **Calendario alineado con las eras** (Clásica ≈ 800 a.C., Medieval ≈ 500, Pólvora ≈ 1450, Industrial ≈ 1780, Moderna ≈ 1920) y
+  la última era sin estirarse de más (se puede acortar la partida).
+- **Guerras con motivo** y cansancio de guerra (no guerra perpetua); rendimientos decrecientes al expandirse (hoy Expansión domina).
+- **Simetría**: la civ del humano usa el oro como las IAs (el gobernador compra cuando sobra) y los plazos de avisos/intrigas no lo
+  castigan por no mirar. Los milagros son lo del jugador (la IA solo los lanza por él con piloto automático).
+- La crónica solo muestra lo importante para el jugador; las decisiones internas de las IAs no se registran.
+- Avisos (decisiones con opciones) más espaciados y siempre relevantes; opción de pausar al llegar uno.
 - Velocidad por defecto 1x; 2x/4x/8x para adelantar.
+- Balance entre civs (hoy Mayas ganan 35%, Aztecas 4%) y algo contra la bola de nieve (los dioses rivales se alían contra el líder).
 
 ### 3.8 Control directo (se mantiene, reencuadrado)
 «Tu pueblo te obedece»: seleccionar tropas y darles órdenes, elegir producción de ciudades y comprar con oro sigue
@@ -186,9 +199,9 @@ Módulos: `plegaria_nueva`, `plegaria_cumplida`, `plegaria_fallida` {civ, ciudad
 - Edificio nuevo `templo` en `SIM.EDIFICIOS` (+50% Fe de la ciudad; el gobernador lo construye).
 
 ### 6.3 Victoria (núcleo)
-- `SIM.progresoVictoria(m, idx)` → `{conquista:{p, texto}, fe:{p, texto}, maravilla:{p, texto}, puntaje:{p, texto}}`
-  con `p` en 0..1 y `texto` corto para la UI («3 de 4 capitales», «48% de las ciudades, faltan 12%»…).
-- `m.fin = {ganador, motivo, turno}` con motivo ∈ `conquista | fe | maravilla | puntaje`.
+- `SIM.progresoVictoria(m, idx)` → `{dominacion:{p, texto}, fe:{p, texto}, maravilla:{p, texto}, puntaje:{p, texto}}`
+  con `p` en 0..1 y `texto` corto para la UI («14 de 30 ciudades», «48% de las ciudades, faltan 12%»…).
+- `m.fin = {ganador, motivo, turno}` con motivo ∈ `dominacion | fe | maravilla | puntaje` (y `conquista` si queda uno solo).
 
 ### 6.4 Módulos (patrón existente `SIM.modulos`)
 Cada módulo: `SIM.modulos.push({ iniciar(m), turno(m), tick(m), dibujar(g, render, ahora), panel(m, humano) })`.
